@@ -3,52 +3,13 @@
 
 #pragma comment(lib, "winmm.lib")
 
+HMIDIIN hMidiIn_MidiTraC;
+
 HMIDIOUT hMidiOut_NordModular;
 HMIDIOUT hMidiOut_MicroFreak;
 HMIDIOUT hMidiOut_Prophet;
 HMIDIOUT hMidiOut_Iridium;
 HMIDIOUT hMidiOut_JX3P;
-HMIDIIN hMidiIn;
-
-//int get_input_MidiDevices() {
-//	MIDIINCAPS caps;
-//	unsigned dev_in;
-//	unsigned int nMidiDeviceNum = midiInGetNumDevs();
-//	printf("  Midi Input  Devices:\n");
-//	if (nMidiDeviceNum > 1) {
-//		for (unsigned int i = 0; i < nMidiDeviceNum; ++i) {
-//			midiInGetDevCaps(i, &caps, sizeof(MIDIINCAPS));
-//			printf("  [%2i] %s\n", i, caps.szPname);
-//		}
-//		printf("  Select Midi Input: ");
-//		scanf_s("%i", &dev_in);
-//	}
-//	else {
-//		fprintf(stderr, "  no Midi-IN Device");
-//		return -1;
-//	}
-//	return dev_in;
-//}
-//
-//int get_output_MidiDevices() {
-//	MIDIOUTCAPS caps;
-//	unsigned int dev_out;
-//	unsigned int nMidiDeviceNum = midiOutGetNumDevs();
-//	printf("  Midi Output Devices:\n");
-//	if (nMidiDeviceNum > 1) {
-//		for (unsigned int i = 0; i < nMidiDeviceNum; ++i) {
-//			midiOutGetDevCaps(i, &caps, sizeof(MIDIOUTCAPS));
-//			printf("  [%2i] %s\n", i, caps.szPname);
-//		}
-//		printf("  Select Midi Output: ");
-//		scanf_s("%d", &dev_out);
-//	}
-//	else {
-//		fprintf(stderr, "  midiOutGetNumDevs() return 0...");
-//		return -1;
-//	}
-//	return dev_out;
-//}
 
 #define MIDITRAC 8
 
@@ -58,7 +19,42 @@ HMIDIIN hMidiIn;
 #define IRIDIUM 8
 #define JX3P 10
 
+//void show_MidiDevices() {
+//	MIDIINCAPS inputCaps;
+//	MIDIOUTCAPS outputCaps;
+//	unsigned int inputDeviceNum = midiInGetNumDevs();
+//	unsigned int outputDeviceNum = midiOutGetNumDevs();
+//	printf("  Midi Input Devices:\n  -------------------\n");
+//	if (inputDeviceNum > 0) {
+//		for (unsigned int i = 0; i < inputDeviceNum; ++i) {
+//			midiInGetDevCaps(i, &inputCaps, sizeof(MIDIINCAPS));
+//			wprintf(L"  [%2i] %s\n", i, inputCaps.szPname);
+//		}
+//	}
+//	else {
+//		fprintf(stderr, "  no Midi-In Device");
+//	}
+//	printf("\n  Midi Output Devices:\n  --------------------\n");
+//	if (outputDeviceNum > 0) {
+//		for (unsigned int i = 0; i < outputDeviceNum; ++i) {
+//			midiOutGetDevCaps(i, &outputCaps, sizeof(MIDIOUTCAPS));
+//			wprintf(L"  [%2i] %s\n", i, outputCaps.szPname);
+//		}
+//	}
+//	else {
+//		fprintf(stderr, "  no Midi-Out Device");
+//	}
+//	printf("\n  press [SPACE]\n");
+//	while (!(GetAsyncKeyState(VK_SPACE) & 0x8000)) {}
+//}
+
 void CALLBACK MidiInProc(HMIDIIN hmidiIN, unsigned int wMsg, long dwInstance, unsigned int dwParam1, unsigned int dwParam2) {
+	if (dwParam1 == 0xf8) { // handle MidiClock
+		midiOutShortMsg(hMidiOut_NordModular, 0xf8);
+		midiOutShortMsg(hMidiOut_MicroFreak, 0xf8);
+		midiOutShortMsg(hMidiOut_Prophet, 0xf8);
+		midiOutShortMsg(hMidiOut_Iridium, 0xf8);
+	} 
 	switch (dwParam1 & 0xf) {
 		case 0: // MidiIputKanal 1 -> NordModular Slot 1 Kanal 1
 			midiOutShortMsg(hMidiOut_NordModular, dwParam1);
@@ -110,17 +106,25 @@ void CALLBACK MidiInProc(HMIDIIN hmidiIN, unsigned int wMsg, long dwInstance, un
 	}
 }
 
+
 int main() {
+	//show_MidiDevices();
+	//system("CLS");
+
 	midiOutOpen(&hMidiOut_NordModular, NORDMODULAR, 0, 0, 0);
 	midiOutOpen(&hMidiOut_MicroFreak, MICROFREAK, 0, 0, 0);
 	midiOutOpen(&hMidiOut_Prophet, PROPHET, 0, 0, 0);
 	midiOutOpen(&hMidiOut_Iridium, IRIDIUM, 0, 0, 0);
 	midiOutOpen(&hMidiOut_JX3P, JX3P, 0, 0, 0);
-	midiInOpen(&hMidiIn, MIDITRAC, (DWORD_PTR)(void*)MidiInProc, 0, CALLBACK_FUNCTION);
-	midiInStart(hMidiIn);
+
+	midiInOpen(&hMidiIn_MidiTraC, MIDITRAC, (DWORD_PTR)(void*)MidiInProc, 0, CALLBACK_FUNCTION);
+	midiInStart(hMidiIn_MidiTraC);
+
 	printf("Route666 by @liceD25...\n\nNordModular:\t1|2|3|4\nRoland JX3P:\t5\nMicroFreak:\t6\nProphet:\t7\nIridium:\t8|9\n\n[ESC]");
 	while (!(GetAsyncKeyState(VK_ESCAPE) &0x8000)){}
-	midiInStop(hMidiIn);
+
+	midiInStop(hMidiIn_MidiTraC);
+
 	midiOutReset(hMidiOut_NordModular);
 	midiOutReset(hMidiOut_MicroFreak);
 	midiOutReset(hMidiOut_Prophet);
