@@ -49,11 +49,11 @@ HMIDIOUT hMidiOut_JX3P;
 //}
 
 void CALLBACK MidiInProc(HMIDIIN hmidiIN, unsigned int wMsg, long dwInstance, unsigned int dwParam1, unsigned int dwParam2) {
-	if (dwParam1 == 0xf8) { // handle MidiClock
-		midiOutShortMsg(hMidiOut_NordModular, 0xf8);
-		midiOutShortMsg(hMidiOut_MicroFreak, 0xf8);
-		midiOutShortMsg(hMidiOut_Prophet, 0xf8);
-		midiOutShortMsg(hMidiOut_Iridium, 0xf8);
+	if (dwParam1 == 0xf8 || dwParam1 == 0xfa || dwParam1 == 0xfc) { // handle MidiRealTime
+		midiOutShortMsg(hMidiOut_NordModular, dwParam1);
+		midiOutShortMsg(hMidiOut_MicroFreak, dwParam1);
+		midiOutShortMsg(hMidiOut_Prophet, dwParam1);
+		midiOutShortMsg(hMidiOut_Iridium, dwParam1);
 	} 
 	switch (dwParam1 & 0xf) {
 		case 0: // MidiIputKanal 1 -> NordModular Slot 1 Kanal 1
